@@ -1,23 +1,27 @@
+from fastembed import TextEmbedding
 from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader, TextLoader
-from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config import Settings
 from app.schemas import Source
 
 
-def _embeddings(settings: Settings) -> OpenAIEmbeddings:
-    return OpenAIEmbeddings(
-        model=settings.embedding_model,
-        openai_api_key=settings.openai_api_key,
-    )
+class _FastEmbeddings:
+    def __init__(self, model_name: str):
+        self._model = TextEmbedding(model_name=model_name)
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [vec.tolist() for vec in self._model.embed(texts)]
+
+    def embed_query(self, text: str) -> list[float]:
+        return next(self._model.embed([text])).tolist()
 
 
 def _vector_store(settings: Settings) -> Chroma:
     return Chroma(
         collection_name=settings.collection_name,
-        embedding_function=_embeddings(settings),
+        embedding_function=_FastEmbeddings(settings.embedding_model),
         persist_directory=settings.chroma_dir,
     )
 

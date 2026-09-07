@@ -14,6 +14,7 @@ from app.schemas import HealthResponse, IngestResponse, QueryRequest, QueryRespo
 class TextIngestRequest(BaseModel):
     text: str
 
+
 settings = get_settings()
 
 app = FastAPI(title="Lumen API", version="0.1.0")
@@ -27,12 +28,23 @@ app.add_middleware(
 )
 
 
+def _llm() -> ChatOpenAI:
+    return ChatOpenAI(
+        model=settings.chat_model,
+        api_key=settings.api_key,
+        base_url=settings.api_base,
+        temperature=0,
+        timeout=120,
+        max_retries=2,
+    )
+
+
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(
         status="ok",
         docs=rag.document_count(settings),
-        model=settings.openai_model,
+        model=settings.chat_model,
     )
 
 
@@ -66,15 +78,10 @@ async def ingest_file(file: UploadFile = File(...)) -> IngestResponse:
 def query(req: QueryRequest) -> QueryResponse:
     sources = rag.search(req.question, settings)
     context = "\n\n".join(f"[{i+1}] {s.content}" for i, s in enumerate(sources))
-    llm = ChatOpenAI(
-        model=settings.openai_model,
-        api_key=settings.openai_api_key,
-        temperature=0,
-    )
     prompt = (
         "You are Lumen, an answer engine. Answer the question using ONLY the context below. "
         "If the context lacks the answer, say so. Be concise and accurate.\n\n"
         f"Context:\n{context}\n\nQuestion: {req.question}"
     )
-    answer = llm.invoke(prompt).content
+    answer = _llm().invoke(prompt).content
     return QueryResponse(answer=answer, sources=sources)
