@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_prefix="LUMEN_", extra="ignore")
+    model_config = SettingsConfigDict(env_file=".env", env_prefix="NUGGET_", extra="ignore")
 
     # Any OpenAI-compatible endpoint works; both are required so nothing provider-specific
     # is baked into the code.
@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
     chroma_dir: str = "./data/chroma"
     model_cache_dir: str = "./data/models"
-    collection_name: str = "lumen"
+    collection_name: str = "nugget"
     cors_origins: str = "http://localhost:3000"
     chunk_size: int = 1000
     chunk_overlap: int = 150

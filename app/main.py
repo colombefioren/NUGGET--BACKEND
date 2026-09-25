@@ -23,7 +23,7 @@ from app.schemas import (
 
 settings = get_settings()
 
-app = FastAPI(title="Lumen API", version="1.0.0")
+app = FastAPI(title="Nugget API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,7 +39,7 @@ def _ms(start: float) -> int:
 
 def _llm_error(exc: Exception) -> HTTPException:
     if isinstance(exc, llm.LLMNotConfiguredError):
-        return HTTPException(503, "The language model is not configured. Set LUMEN_API_KEY.")
+        return HTTPException(503, "The language model is not configured. Set NUGGET_API_KEY.")
     return HTTPException(502, f"The language model request failed: {exc}")
 
 
