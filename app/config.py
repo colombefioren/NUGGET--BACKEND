@@ -13,13 +13,15 @@ class Settings(BaseSettings):
     chat_model: str
     api_key: str = ""
 
-    # A separate, also-required, OpenAI-compatible endpoint for embeddings. Running an
-    # embedding model in-process needs 600MB+ of RAM (measured), which alone exceeds most
-    # free hosting tiers (Render free = 512MB) — so embeddings are always a remote call,
-    # never a locally loaded model. See .env.example for free-tier providers.
+    # A separate, also-required, OpenAI-compatible endpoint for embeddings. There is no
+    # "retrieval only" fallback for a missing key the way there is for the chat model — RAG
+    # is meaningless without embeddings — so all three fail fast at boot instead of on first
+    # request. Running an embedding model in-process needs 600MB+ of RAM (measured), which
+    # alone exceeds most free hosting tiers (Render free = 512MB); this is always a remote
+    # call, never a locally loaded model. See .env.example for free-tier providers.
     embedding_api_base: str
     embedding_model: str
-    embedding_api_key: str = ""
+    embedding_api_key: str
 
     chroma_dir: str = "./data/chroma"
     collection_name: str = "nugget"
