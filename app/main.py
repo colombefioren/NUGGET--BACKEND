@@ -43,6 +43,12 @@ def _llm_error(exc: Exception) -> HTTPException:
     return HTTPException(502, f"The language model request failed: {exc}")
 
 
+def _embedding_error(exc: Exception) -> HTTPException:
+    # Embeddings are a separate remote provider from the chat model (see app/embeddings.py),
+    # so a failure here is reported distinctly rather than folded into "the LLM failed".
+    return HTTPException(502, f"The embeddings provider request failed: {exc}")
+
+
 @app.get("/healthz")
 def healthz() -> dict[str, str]:
     """Liveness probe for platform health checks. Deliberately touches nothing
@@ -108,7 +114,12 @@ async def ingest_file(file: UploadFile = File(...)) -> IngestResponse:
         raise HTTPException(415, str(exc)) from exc
     except Exception as exc:
         raise HTTPException(422, f"Could not read {name}: {exc}") from exc
-    return await run_in_threadpool(_ingest, name, extension(name) or "txt", data, pages)
+    try:
+        return await run_in_threadpool(_ingest, name, extension(name) or "txt", data, pages)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _embedding_error(exc) from exc
 
 
 @app.post("/ingest/text", response_model=IngestResponse)
@@ -118,7 +129,12 @@ async def ingest_text(req: TextIngestRequest) -> IngestResponse:
         raise HTTPException(422, "The text is empty")
     title = (req.title or "").strip() or text.split("\n", 1)[0][:60].strip() or "Note"
     data = text.encode()
-    return await run_in_threadpool(_ingest, title, "note", data, [Page(text)])
+    try:
+        return await run_in_threadpool(_ingest, title, "note", data, [Page(text)])
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _embedding_error(exc) from exc
 
 
 async def _prepare(req: QueryRequest) -> tuple[str, list, Timings]:
@@ -137,14 +153,19 @@ async def _prepare(req: QueryRequest) -> tuple[str, list, Timings]:
 
 @app.post("/query", response_model=QueryResponse)
 async def query(req: QueryRequest) -> QueryResponse:
+    # Two distinct providers can fail here (embeddings during retrieval, chat during
+    # generation), so each stage is caught separately to report which one broke.
     try:
         search_query, sources, timings = await _prepare(req)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise _embedding_error(exc) from exc
+    try:
         start = time.perf_counter()
         messages = llm.build_messages(req.question, req.history, sources, req.locale)
         answer = "".join([t async for t in llm.stream_answer(messages)])
         timings.generation_ms = _ms(start)
-    except HTTPException:
-        raise
     except Exception as exc:
         raise _llm_error(exc) from exc
     return QueryResponse(answer=answer, sources=sources, search_query=search_query, timings=timings)
@@ -159,6 +180,10 @@ async def query_stream(req: QueryRequest) -> StreamingResponse:
     async def events() -> AsyncIterator[str]:
         try:
             search_query, sources, timings = await _prepare(req)
+        except Exception as exc:
+            yield _sse("error", {"detail": _embedding_error(exc).detail})
+            return
+        try:
             yield _sse(
                 "sources",
                 {
