@@ -5,10 +5,10 @@ import re
 import tempfile
 
 os.environ.update(
-    LUMEN_API_BASE="http://llm.test/v1",
-    LUMEN_CHAT_MODEL="test-model",
-    LUMEN_API_KEY="test-key",
-    LUMEN_CHROMA_DIR=tempfile.mkdtemp(prefix="lumen-test-"),
+    NUGGET_API_BASE="http://llm.test/v1",
+    NUGGET_CHAT_MODEL="test-model",
+    NUGGET_API_KEY="test-key",
+    NUGGET_CHROMA_DIR=tempfile.mkdtemp(prefix="nugget-test-"),
 )
 
 import pytest  # noqa: E402

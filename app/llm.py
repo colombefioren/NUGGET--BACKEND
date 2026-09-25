@@ -8,7 +8,7 @@ from langchain_openai import ChatOpenAI
 from app.config import get_settings
 from app.schemas import Source, Turn
 
-SYSTEM_PROMPT = """You are Lumen, a precise research assistant that answers questions from the user's own documents.
+SYSTEM_PROMPT = """You are Nugget, a precise research assistant that answers questions from the user's own documents.
 
 Rules:
 - Ground every claim in the numbered context passages. Cite them inline like [1] or [2][3], right after the claim they support.
@@ -45,7 +45,7 @@ class LLMNotConfiguredError(RuntimeError):
 def chat_model() -> BaseChatModel:
     settings = get_settings()
     if not settings.api_key:
-        raise LLMNotConfiguredError("LUMEN_API_KEY is not set")
+        raise LLMNotConfiguredError("NUGGET_API_KEY is not set")
     return ChatOpenAI(
         model=settings.chat_model,
         api_key=settings.api_key,

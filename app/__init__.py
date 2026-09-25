@@ -1,1 +1,1 @@
-"""Lumen backend package."""
+"""Nugget backend package."""
