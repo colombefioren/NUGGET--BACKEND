@@ -48,7 +48,7 @@ Or with Docker: `docker build -t nugget-backend . && docker run -p 8000:7860 --e
 | Env | |
 | --- | --- |
 | `NUGGET_API_BASE` · `NUGGET_CHAT_MODEL` · `NUGGET_API_KEY` | **required**: any OpenAI-compatible chat endpoint. Ingest/library endpoints work without a key — only answer generation needs it |
-| `NUGGET_EMBEDDING_API_BASE` · `NUGGET_EMBEDDING_MODEL` · `NUGGET_EMBEDDING_API_KEY` | **required**: a *separate* OpenAI-compatible embeddings endpoint (most chat providers don't offer one). Free options: Mistral AI (`mistral-embed`), Jina AI, Voyage AI |
+| `NUGGET_EMBEDDING_API_BASE` · `NUGGET_EMBEDDING_MODEL` · `NUGGET_EMBEDDING_API_KEY` | **required**: a *separate* OpenAI-compatible embeddings endpoint (most chat providers don't offer one). Free options: NVIDIA NIM (`nvidia/nemotron-3-embed-1b`), Mistral AI (`mistral-embed`), Jina AI, Voyage AI |
 | `NUGGET_TOP_K` · `NUGGET_CHUNK_SIZE` · `NUGGET_MAX_UPLOAD_MB` | `6` · `1000` · `25` |
 
 ## ✦ Endpoints
