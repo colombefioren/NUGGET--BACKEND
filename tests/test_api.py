@@ -69,3 +69,30 @@ def test_stream_emits_sources_tokens_and_done(client):
     names = [e for e, _ in events]
     assert names[0] == "sources" and names[-1] == "done"
     assert "".join(d for e, d in events if e == "token") == "Paris is the capital [1]."
+
+
+def test_broken_embeddings_provider_is_reported_distinctly(client, monkeypatch):
+    """Embeddings and chat are separate remote providers; a broken one should say so,
+    not be folded into a generic or "language model" error."""
+    from app import store
+
+    def boom():
+        raise RuntimeError("connection refused")
+
+    # get_store() is @lru_cache'd and calls get_embeddings() eagerly to build the Chroma
+    # client, so this patch must be undone before the autouse fixture's own teardown
+    # (store.list_documents(), which also goes through get_store()) runs on a broken store.
+    working = store.get_embeddings
+    monkeypatch.setattr(store, "get_embeddings", boom)
+    store.get_store.cache_clear()
+    try:
+        res = client.post("/ingest/text", json={"text": "will fail to embed"})
+        assert res.status_code == 502
+        assert "embeddings provider" in res.json()["detail"].lower()
+
+        res = client.post("/query", json={"question": "anything"})
+        assert res.status_code == 502
+        assert "embeddings provider" in res.json()["detail"].lower()
+    finally:
+        monkeypatch.setattr(store, "get_embeddings", working)
+        store.get_store.cache_clear()

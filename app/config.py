@@ -12,9 +12,18 @@ class Settings(BaseSettings):
     api_base: str
     chat_model: str
     api_key: str = ""
-    embedding_model: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+
+    # A separate, also-required, OpenAI-compatible endpoint for embeddings. There is no
+    # "retrieval only" fallback for a missing key the way there is for the chat model — RAG
+    # is meaningless without embeddings — so all three fail fast at boot instead of on first
+    # request. Running an embedding model in-process needs 600MB+ of RAM (measured), which
+    # alone exceeds most free hosting tiers (Render free = 512MB); this is always a remote
+    # call, never a locally loaded model. See .env.example for free-tier providers.
+    embedding_api_base: str
+    embedding_model: str
+    embedding_api_key: str
+
     chroma_dir: str = "./data/chroma"
-    model_cache_dir: str = "./data/models"
     collection_name: str = "nugget"
     cors_origins: str = "http://localhost:3000"
     chunk_size: int = 1000
