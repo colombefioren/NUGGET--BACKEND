@@ -43,6 +43,13 @@ def _llm_error(exc: Exception) -> HTTPException:
     return HTTPException(502, f"The language model request failed: {exc}")
 
 
+@app.get("/healthz")
+def healthz() -> dict[str, str]:
+    """Liveness probe for platform health checks. Deliberately touches nothing
+    (no Chroma, no embeddings), so it stays fast and cheap under frequent polling."""
+    return {"status": "ok"}
+
+
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(
