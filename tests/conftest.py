@@ -8,6 +8,10 @@ os.environ.update(
     NUGGET_API_BASE="http://llm.test/v1",
     NUGGET_CHAT_MODEL="test-model",
     NUGGET_API_KEY="test-key",
+    # Never dialed in tests: get_embeddings() is always monkeypatched below.
+    NUGGET_EMBEDDING_API_BASE="http://embed.test/v1",
+    NUGGET_EMBEDDING_MODEL="test-embed-model",
+    NUGGET_EMBEDDING_API_KEY="test-embed-key",
     NUGGET_CHROMA_DIR=tempfile.mkdtemp(prefix="nugget-test-"),
 )
 
